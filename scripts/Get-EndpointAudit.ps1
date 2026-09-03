@@ -19,6 +19,12 @@ function Get-EndpointAudit {
         # RETRIEVE PROCESSOR INFORMATION
         $ProcessorInfo = Get-CimInstance -Class Win32_Processor -ComputerName $Endpoint
 
+        # RETRIEVE STOPPED SERVICES INFORMATION
+        $StoppedServices = Get-CimInstance -Class Win32_Service -ComputerName $Endpoint |
+            Where-Object { $_.State -eq "Stopped" } |
+            Sort-Object -Property Name |
+            Select-Object -Property Name, DisplayName, State
+
         $results = [PSCustomObject]@{
 
             "ComputerName" = $ComputerInfo.Name
@@ -40,6 +46,8 @@ function Get-EndpointAudit {
             "ProcessorName" = $ProcessorInfo.Name
             "ProcessorManufacturer" = $ProcessorInfo.Manufacturer
             "MaxClockSpeed" = $ProcessorInfo.MaxClockSpeed
+
+            "StoppedServices" = $StoppedServices
         }
 
         return $results
