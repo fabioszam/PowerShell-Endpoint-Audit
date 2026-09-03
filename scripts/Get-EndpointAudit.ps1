@@ -4,17 +4,38 @@ function Get-EndpointAudit {
         [string]$Endpoint
     )
 
-    # Check if the endpoint is reachable
+    # CHECK IF THE ENDPOINT IS ACCESSIBLE VIA ICMP (PING)
     if (Test-Connection -ComputerName $Endpoint -Count 1 -Quiet) {
-        Write-Output "Endpoint $Endpoint is reachable."
         
-        # Retrieve system information
-        $systemInfo = Get-CimInstance -Class Win32_OperatingSystem -ComputerName $Endpoint
-        Write-Output "Operating System: $($systemInfo.Caption)"
-        Write-Output "Version: $($systemInfo.Version)"
-        Write-Output "Build Number: $($systemInfo.BuildNumber)"
-        Write-Output "OS Architecture: $($systemInfo.OSArchitecture)"
+        # RETRIEVE OPERATING SYSTEM INFORMATION
+        $OperatingSystemInfo = Get-CimInstance -Class Win32_OperatingSystem -ComputerName $Endpoint
+
+        # RETRIEVE HARDWARE AND CONFIGURATION INFORMATION
+        $ComputerInfo = Get-CimInstance -Class Win32_ComputerSystem -ComputerName $Endpoint
+
+        $results = [PSCustomObject]@{
+
+            "ComputerName" = $ComputerInfo.Name
+            "OperatingSystem" = $OperatingSystemInfo.Caption
+            "Version" = $OperatingSystemInfo.Version
+            "BuildNumber" = $OperatingSystemInfo.BuildNumber
+            "OSArchitecture" = $OperatingSystemInfo.OSArchitecture
+
+            "Manufacturer" = $ComputerInfo.Manufacturer
+            "Model" = $ComputerInfo.Model
+            "TotalPhysicalMemory" = $ComputerInfo.TotalPhysicalMemory
+            "SystemType" = $ComputerInfo.SystemType
+
+            "Status" = "Online"
+        }
+
+        return $results
+
     } else {
-        Write-Output "Endpoint $Endpoint is not reachable."
+        $results = [PSCustomObject]@{
+            "ComputerName" = $Endpoint
+            "Status" = "Offline"
+        }
+        return $results
     }
 }
