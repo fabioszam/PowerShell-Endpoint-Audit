@@ -1,7 +1,9 @@
 function Get-EndpointAudit {
     param (
         [Parameter(Mandatory=$true)]
-        [string]$Endpoint
+        [string]$Endpoint,
+
+        [string]$OutputPath = ".\AuditReports"
     )
 
     # CHECK IF THE ENDPOINT IS ACCESSIBLE VIA ICMP (PING)
@@ -12,6 +14,11 @@ function Get-EndpointAudit {
         }
         return $results
     } 
+
+    # CHECK IF THE OUTPUT DIRECTORY EXISTS, IF NOT, CREATE IT
+    if (-not (Test-Path -Path $OutputPath)) {
+        New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
+    }
 
     $CimSession = $null
 
