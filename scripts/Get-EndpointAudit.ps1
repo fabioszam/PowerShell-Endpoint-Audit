@@ -25,6 +25,11 @@ function Get-EndpointAudit {
             Sort-Object -Property Name |
             Select-Object -Property Name, DisplayName, State
 
+        # RETRIEVE TOP 5 MEMORY-CONSUMING PROCESSES
+        $TopMemoryProcesses = Get-CimInstance -Class Win32_Process -ComputerName $Endpoint |
+            Sort-Object -Property WorkingSetSize -Descending |
+            Select-Object -First 5 -Property ProcessName, ProcessId, WorkingSetSize
+
         $results = [PSCustomObject]@{
 
             "ComputerName" = $ComputerInfo.Name
@@ -48,6 +53,7 @@ function Get-EndpointAudit {
             "MaxClockSpeed" = $ProcessorInfo.MaxClockSpeed
 
             "StoppedServices" = $StoppedServices
+            "TopMemoryProcesses" = $TopMemoryProcesses
         }
 
         return $results
