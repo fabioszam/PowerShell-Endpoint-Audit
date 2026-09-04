@@ -72,6 +72,12 @@ function Get-EndpointAudit {
             "TopMemoryProcesses" = $TopMemoryProcesses
         }
 
+        # EXPORT THE RESULTS TO A CSV FILE
+
+        $ReportFileName = "$OutputPath\AuditReport_$($Endpoint)_$(Get-Date -Format 'yyyyMMdd_HHmmss').csv"
+        $results | Select-Object ComputerName, Status, OperatingSystem, Version, BuildNumber, OSArchitecture, Manufacturer, Model, TotalPhysicalMemory, SystemType, BIOSManufacturer, BIOSVersion, BIOSSerialNumber, ProcessorName, ProcessorManufacturer, MaxClockSpeed | 
+        Export-Csv -Path $ReportFileName -Force
+
         return $results
 
     } finally {
