@@ -83,6 +83,12 @@ function Get-EndpointAudit {
         $StoppedServices |
             Export-Csv -Path $StoppedServicesReportFileName -NoTypeInformation -Force
 
+        # EXPORT TOP MEMORY PROCESSES TO A SEPARATE CSV FILE
+        $TopMemoryProcessesReportFileName = "$OutputPath\TopMemoryProcesses_$($Endpoint)_$(Get-Date -Format 'yyyyMMdd_HHmmss').csv"
+
+        $TopMemoryProcesses |
+            Export-Csv -Path $TopMemoryProcessesReportFileName -NoTypeInformation -Force
+
         return $results
 
     } finally {
