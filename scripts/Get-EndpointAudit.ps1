@@ -89,6 +89,13 @@ function Get-EndpointAudit {
         $TopMemoryProcesses |
             Export-Csv -Path $TopMemoryProcessesReportFileName -NoTypeInformation -Force
 
+        # EXPORT COMPLETE ENDPOINT AUDIT TO JSON
+        $JsonReportFileName = "$OutputPath\EndpointAudit_$($Endpoint)_$(Get-Date -Format 'yyyyMMdd_HHmmss').json"
+
+        $results |
+            ConvertTo-Json -Depth 5 |
+            Out-File -FilePath $JsonReportFileName -Force
+
         return $results
 
     } finally {
