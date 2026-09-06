@@ -1,4 +1,5 @@
 function Get-EndpointAudit {
+    [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true)]
         [string]$Endpoint,
@@ -25,7 +26,7 @@ function Get-EndpointAudit {
     try {
 
         # CREATE A CIM SESSION TO THE REMOTE ENDPOINT
-        $CimSession = New-CimSession -ComputerName $Endpoint
+        $CimSession = New-CimSession -ComputerName $Endpoint -ErrorAction Stop
 
         # RETRIEVE OPERATING SYSTEM INFORMATION
         $OperatingSystemInfo = Get-CimInstance -CimSession $CimSession -ClassName Win32_OperatingSystem
@@ -97,6 +98,22 @@ function Get-EndpointAudit {
             Out-File -FilePath $JsonReportFileName -Force
 
         return $results
+
+    # HANDLE SPECIFIC CIM EXCEPTIONS AND GENERAL ERRORS
+    } catch [Microsoft.Management.Infrastructure.CimException] {
+       $CustomException = [System.Exception]::new("CIM communication error on endpoint $Endpoint . Details: $($_.Exception.Message)")
+
+       $ErrorRecord = [System.Management.Automation.ErrorRecord]::new($CustomException, "CIMConnectionError", [System.Management.Automation.ErrorCategory]::ConnectionError, $Endpoint)
+
+       $PSCmdlet.ThrowTerminatingError($ErrorRecord)
+
+    # HANDLE GENERAL EXCEPTIONS    
+    } catch {
+        $CustomException = [System.Exception]::new("Unexpected error on endpoint $Endpoint . Details: $($_.Exception.Message)")
+
+        $ErrorRecord = [System.Management.Automation.ErrorRecord]::new($CustomException, "UnexpectedError", [System.Management.Automation.ErrorCategory]::NotSpecified, $Endpoint)
+       
+        $PSCmdlet.ThrowTerminatingError($ErrorRecord)
 
     } finally {
         if ($CimSession) {
