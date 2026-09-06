@@ -16,6 +16,16 @@ function Get-EndpointAudit {
         return $results
     } 
 
+    # CHECK IF THE ENDPOINT IS ACCESSIBLE VIA WS-MAN (WINRM)
+    $WinRMStatus = Test-WSMan -ComputerName $Endpoint -ErrorAction SilentlyContinue
+    if (-not $WinRMStatus) {
+        $results = [PSCustomObject]@{
+            "ComputerName" = $Endpoint
+            "Status" = "WinRM Unavailable"
+        }
+        return $results
+    }
+
     # CHECK IF THE OUTPUT DIRECTORY EXISTS, IF NOT, CREATE IT
     if (-not (Test-Path -Path $OutputPath)) {
         New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
