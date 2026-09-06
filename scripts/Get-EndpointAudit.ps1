@@ -4,26 +4,27 @@ function Get-EndpointAudit {
         [Parameter(Mandatory=$true)]
         [string]$Endpoint,
 
+        [System.Management.Automation.Credential()]
+        [PSCredential]$Credential,
+
         [string]$OutputPath = ".\AuditReports"
     )
 
     # CHECK IF THE ENDPOINT IS ACCESSIBLE VIA ICMP (PING)
-    if (-not (Test-Connection -ComputerName $Endpoint -Count 1 -Quiet)){
-            $results = [PSCustomObject]@{
-            "ComputerName" = $Endpoint
-            "Status" = "Offline"
-        }
-        return $results
-    } 
+    $PingSuccess = Test-Connection -ComputerName $Endpoint -Count 1 -Quiet
 
     # CHECK IF THE ENDPOINT IS ACCESSIBLE VIA WS-MAN (WINRM)
     $WinRMStatus = Test-WSMan -ComputerName $Endpoint -ErrorAction SilentlyContinue
-    if (-not $WinRMStatus) {
-        $results = [PSCustomObject]@{
+    $WinRMAvailable = [bool]$WinRMStatus
+
+    # RETURN OFFLINE STATUS IF BOTH PING AND WINRM FAIL
+    if (-not $PingSuccess -and -not $WinRMAvailable) {
+        return [PSCustomObject]@{
             "ComputerName" = $Endpoint
-            "Status" = "WinRM Unavailable"
+            "Status" = "Unreachable"
+            "PingSuccess" = $PingSuccess
+            "WinRMAvailable" = $WinRMAvailable
         }
-        return $results
     }
 
     # CHECK IF THE OUTPUT DIRECTORY EXISTS, IF NOT, CREATE IT
@@ -36,7 +37,12 @@ function Get-EndpointAudit {
     try {
 
         # CREATE A CIM SESSION TO THE REMOTE ENDPOINT
-        $CimSession = New-CimSession -ComputerName $Endpoint -ErrorAction Stop
+        # IF CREDENTIALS ARE PROVIDED, USE THEM; OTHERWISE, USE THE CURRENT USER CONTEXT
+        if ($Credential -eq $null) {
+            $CimSession = New-CimSession -ComputerName $Endpoint -ErrorAction Stop
+        } else {
+            $CimSession = New-CimSession -ComputerName $Endpoint -Credential $Credential -ErrorAction Stop
+        }
 
         # RETRIEVE OPERATING SYSTEM INFORMATION
         $OperatingSystemInfo = Get-CimInstance -CimSession $CimSession -ClassName Win32_OperatingSystem
