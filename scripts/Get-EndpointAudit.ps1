@@ -7,6 +7,8 @@ function Get-EndpointAudit {
         [System.Management.Automation.Credential()]
         [PSCredential]$Credential,
 
+        [switch]$UseSSL,
+
         [string]$OutputPath = ".\AuditReports"
     )
 
@@ -36,12 +38,20 @@ function Get-EndpointAudit {
 
     try {
 
+        # CONFIGURE CIM SESSION OPTIONS BASED ON SSL REQUIREMENT
+        if ($UseSSL) {
+            # CONFIGURE WINRM TO USE HTTPS IF SSL IS REQUESTED
+            $SessionOption = New-CimSessionOption -UseSsl
+        } else {
+            $SessionOption = $null
+        }
+
         # CREATE A CIM SESSION TO THE REMOTE ENDPOINT
         # IF CREDENTIALS ARE PROVIDED, USE THEM; OTHERWISE, USE THE CURRENT USER CONTEXT
         if ($Credential -eq $null) {
-            $CimSession = New-CimSession -ComputerName $Endpoint -ErrorAction Stop
+            $CimSession = New-CimSession -ComputerName $Endpoint -SessionOption $SessionOption -ErrorAction Stop
         } else {
-            $CimSession = New-CimSession -ComputerName $Endpoint -Credential $Credential -ErrorAction Stop
+            $CimSession = New-CimSession -ComputerName $Endpoint -SessionOption $SessionOption -Credential $Credential -ErrorAction Stop
         }
 
         # RETRIEVE OPERATING SYSTEM INFORMATION
