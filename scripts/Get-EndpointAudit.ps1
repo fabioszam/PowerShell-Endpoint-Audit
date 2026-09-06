@@ -17,7 +17,7 @@ function Get-EndpointAudit {
     $WinRMStatus = Test-WSMan -ComputerName $Endpoint -ErrorAction SilentlyContinue
     $WinRMAvailable = [bool]$WinRMStatus
 
-    # RETURN OFFLINE STATUS IF BOTH PING AND WINRM FAIL
+    # RETURN UNREACHABLE STATUS IF BOTH PING AND WINRM FAIL
     if (-not $PingSuccess -and -not $WinRMAvailable) {
         return [PSCustomObject]@{
             "ComputerName" = $Endpoint
@@ -71,6 +71,8 @@ function Get-EndpointAudit {
         $results = [PSCustomObject]@{
             "ComputerName" = $ComputerInfo.Name
             "Status" = "Online"
+            "PingSuccess" = $PingSuccess
+            "WinRMAvailable" = $WinRMAvailable
             "OperatingSystem" = $OperatingSystemInfo.Caption
             "Version" = $OperatingSystemInfo.Version
             "BuildNumber" = $OperatingSystemInfo.BuildNumber
@@ -91,7 +93,7 @@ function Get-EndpointAudit {
 
         # EXPORT THE RESULTS TO A CSV FILE
         $ReportFileName = "$OutputPath\AuditReport_$($Endpoint)_$(Get-Date -Format 'yyyyMMdd_HHmmss').csv"
-        $results | Select-Object ComputerName, Status, OperatingSystem, Version, BuildNumber, OSArchitecture, Manufacturer, Model, TotalPhysicalMemory, SystemType, BIOSManufacturer, BIOSVersion, BIOSSerialNumber, ProcessorName, ProcessorManufacturer, MaxClockSpeed | 
+        $results | Select-Object ComputerName, Status, PingSuccess, WinRMAvailable, OperatingSystem, Version, BuildNumber, OSArchitecture, Manufacturer, Model, TotalPhysicalMemory, SystemType, BIOSManufacturer, BIOSVersion, BIOSSerialNumber, ProcessorName, ProcessorManufacturer, MaxClockSpeed | 
             Export-Csv -Path $ReportFileName -Force
 
         # EXPORT STOPPED SERVICES TO A SEPARATE CSV FILE
