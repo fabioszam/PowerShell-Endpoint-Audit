@@ -48,11 +48,18 @@ function Get-EndpointAudit {
 
         # CREATE A CIM SESSION TO THE REMOTE ENDPOINT
         # IF CREDENTIALS ARE PROVIDED, USE THEM; OTHERWISE, USE THE CURRENT USER CONTEXT
-        if ($Credential -eq $null) {
-            $CimSession = New-CimSession -ComputerName $Endpoint -SessionOption $SessionOption -ErrorAction Stop
-        } else {
-            $CimSession = New-CimSession -ComputerName $Endpoint -SessionOption $SessionOption -Credential $Credential -ErrorAction Stop
+
+        $CimSessionParameters = @{
+            ComputerName   = $Endpoint
+            SessionOption  = $SessionOption
+            ErrorAction    = 'Stop'
         }
+
+        if ($Credential) {
+            $CimSessionParameters['Credential'] = $Credential
+        }
+
+        $CimSession = New-CimSession @CimSessionParameters
 
         # RETRIEVE OPERATING SYSTEM INFORMATION
         $OperatingSystemInfo = Get-CimInstance -CimSession $CimSession -ClassName Win32_OperatingSystem
